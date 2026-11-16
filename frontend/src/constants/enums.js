@@ -1,1 +1,1 @@
-export const ROLES=['admin','analyst','viewer'];export const STATES=['queued','running','done','failed'];export const DECISIONS=['pending','valid','flagged'];export const LABELS=[0,1];
+export const ROLES=['admin','analyst','viewer'];export const STATES=['queued','running','done','failed'];export const DECISIONS=['pending','valid','flagged'];export const LABELS=[0,1];export const BOOK_STATES=['draft','published','retired'];export const BASE_CURRENCY='CNY';

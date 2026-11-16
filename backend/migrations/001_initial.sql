@@ -1,5 +1,16 @@
 -- Initial schema is created from SQLAlchemy metadata at backend startup.
--- claims: code unique, label nullable (0 normal, 1 anomaly).
--- trainings: frozen snapshot and holdout output JSON.
+-- claims: code unique, label nullable (0 normal, 1 anomaly), currency (ISO-4217,
+--   default CNY) and claim_date (YYYY-MM-DD, nullable; legacy rows are CNY/null).
+-- fx_books: draft -> published -> retired. Published books are immutable.
+--   at most one book is active; its id lives in fx_settings.
+-- fx_rates: directed currency pair with [effective_from, effective_to]
+--   (inclusive; null effective_to means open-ended). No overlapping intervals
+--   per ordered pair; cycle products must be within 1e-3 of 1.
+-- trainings: frozen claim snapshot, frozen fx_book_id + fx_rates (acceptance
+--   time basis), holdout output JSON.
+-- conversions: one row per claim per training with original amount, CNY amount,
+--   rate, effective date and conversion chain; error rows are kept too.
 -- reviews: training_id / claim_id foreign keys with unique source pair.
 -- Exact portable schema: src/models/entities.py.
+-- src/config/schema.py adds the new columns to databases created before FX
+-- support (idempotent; old claims are backfilled to CNY).

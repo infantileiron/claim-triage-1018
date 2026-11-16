@@ -1,12 +1,11 @@
 import json,hashlib
-import numpy as np
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
 from sklearn.linear_model import LogisticRegression
 from sklearn.pipeline import Pipeline
 SEED=3106
-FEATURES=['金额','里程','节假日','每公里金额']
-def features(row):return [row['amount'],row['distance'],int(row['holiday']),row['amount']/(row['distance']+1)]
+FEATURES=['折算金额 / CNY','里程','节假日','每公里折算金额']
+def features(row):return [row['cny_amount'],row['distance'],int(row['holiday']),row['cny_amount']/(row['distance']+1)]
 def metrics(rows,threshold):
  tp=sum(r['label']==1 and r['score']>=threshold for r in rows);fp=sum(r['label']==0 and r['score']>=threshold for r in rows)
  fn=sum(r['label']==1 and r['score']<threshold for r in rows);tn=sum(r['label']==0 and r['score']<threshold for r in rows)
@@ -21,4 +20,4 @@ def train(rows,threshold):
  scored=[{'id':r['id'],'code':r['code'],'label':r['label'],'score':float(p)} for r,p in zip(test_rows,model.predict_proba([features(r) for r in test_rows])[:,1])]
  pending=[r for r in rows if r['label'] is None]
  predictions=[{'id':r['id'],'code':r['code'],'score':float(p)} for r,p in zip(pending,model.predict_proba([features(r) for r in pending])[:,1])] if pending else []
- return dict(train_n=len(train_rows),test_n=len(test_rows),label_counts=counts,metrics=metrics(scored,threshold),threshold_comparison=[metrics(scored,t) for t in (.3,.5,.7)],holdout=scored,pending=predictions,coefficients=[{'feature':f,'coefficient':float(c)} for f,c in zip(FEATURES,model.named_steps['logit'].coef_[0])],train_codes=[r['code'] for r in train_rows],test_codes=[r['code'] for r in test_rows],scaler_mean=model.named_steps['scale'].mean_.tolist(),seed=SEED,checksum=hashlib.sha256(json.dumps(rows,sort_keys=True,ensure_ascii=False).encode()).hexdigest(),warning='评分只用于排定人工复核顺序。标签不进入特征；标准化只在训练集拟合。留出集为演示评估集，反复调阈值后不再是最终独立验收集。系数为标准化关联，不代表因果。')
+ return dict(train_n=len(train_rows),test_n=len(test_rows),label_counts=counts,metrics=metrics(scored,threshold),threshold_comparison=[metrics(scored,t) for t in (.3,.5,.7)],holdout=scored,pending=predictions,coefficients=[{'feature':f,'coefficient':float(c)} for f,c in zip(FEATURES,model.named_steps['logit'].coef_[0])],train_codes=[r['code'] for r in train_rows],test_codes=[r['code'] for r in test_rows],scaler_mean=model.named_steps['scale'].mean_.tolist(),seed=SEED,checksum=hashlib.sha256(json.dumps(rows,sort_keys=True,ensure_ascii=False).encode()).hexdigest(),warning='评分只用于排定人工复核顺序。金额特征先按票据日期折算为人民币；标签不进入特征；标准化只在训练集拟合。留出集为演示评估集，反复调阈值后不再是最终独立验收集。系数为标准化关联，不代表因果。')

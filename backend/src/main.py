@@ -2,13 +2,18 @@ import os,logging
 from contextlib import asynccontextmanager
 from fastapi import FastAPI,Request
 from fastapi.responses import JSONResponse
-from src.config.database import Base,engine
+from src.config.database import Base,engine,Session
+from src.config.schema import ensure_schema
 from src.models import entities
+from src.models.entities import FxSetting
 from src.routes.api import router
 from src.middlewares.request import RequestId,SecurityHeaders
 @asynccontextmanager
 async def lifespan(app):
  Base.metadata.create_all(engine)
+ ensure_schema(engine)
+ with Session() as s:
+  if not s.get(FxSetting,1):s.add(FxSetting(id=1));s.commit()
  if os.getenv('SEED_DEMO')=='true':
   try:
    from scripts.seed_demo import seed
